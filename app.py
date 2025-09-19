@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -17,65 +16,71 @@ df = pd.read_csv("activity_dataset.csv")
 # Streamlit config
 st.set_page_config(page_title="Calories Burn Prediction", layout="wide")
 
-# Tabs
-tab1, tab2 = st.tabs(["📊 Dashboard", "🤖 Prediction"])
+# Sidebar Navigation
+st.sidebar.title("📌 Navigation")
+page = st.sidebar.radio("Go to", ["📊 Dashboard", "🤖 Prediction"])
 
-# -------------------------
-# DASHBOARD TAB
-# -------------------------
-with tab1:
+# =======================================================
+# 📊 DASHBOARD
+# =======================================================
+if page == "📊 Dashboard":
     st.title("📊 Calories Burn Dashboard")
 
-    # KPIs
-    total_activities = df["Activity"].nunique()
-    avg_calories = df["Calories"].mean()
-    max_calories = df["Calories"].max()
-
+    # KPIs in a row
     kpi1, kpi2, kpi3 = st.columns(3)
-    kpi1.metric("Unique Activities", total_activities)
-    kpi2.metric("Avg Calories Burned", f"{avg_calories:.2f}")
-    kpi3.metric("Max Calories Burned", f"{max_calories:.2f}")
+    with kpi1:
+        st.metric("Unique Activities", df["Activity"].nunique())
+    with kpi2:
+        st.metric("Avg Calories Burned", f"{df['Calories'].mean():.2f}")
+    with kpi3:
+        st.metric("Max Calories Burned", f"{df['Calories'].max():.2f}")
 
     st.markdown("---")
 
-    # Visualization 1: Activity distribution
-    st.subheader("Activity Distribution")
-    fig1, ax1 = plt.subplots(figsize=(6, 4))
-    sns.countplot(x="Activity", data=df, palette="viridis", ax=ax1)
-    plt.xticks(rotation=45)
-    st.pyplot(fig1)
+    # Row 1: Activity distribution + Avg calories per activity
+    row1_col1, row1_col2 = st.columns(2)
 
-    # Visualization 2: Avg calories per activity
-    st.subheader("Average Calories per Activity")
-    avg_cal = df.groupby("Activity")["Calories"].mean().sort_values()
-    fig2, ax2 = plt.subplots(figsize=(6, 4))
-    avg_cal.plot(kind="bar", color="teal", ax=ax2)
-    plt.ylabel("Avg Calories")
-    st.pyplot(fig2)
+    with row1_col1:
+        st.subheader("Activity Distribution")
+        fig1, ax1 = plt.subplots(figsize=(5, 3))
+        sns.countplot(x="Activity", data=df, palette="viridis", ax=ax1)
+        plt.xticks(rotation=45)
+        st.pyplot(fig1)
 
-    # Visualization 3: Correlation heatmap
-    st.subheader("Correlation Heatmap")
-    fig3, ax3 = plt.subplots(figsize=(6, 4))
-    sns.heatmap(df.corr(numeric_only=True), annot=True, cmap="coolwarm", ax=ax3)
-    st.pyplot(fig3)
+    with row1_col2:
+        st.subheader("Average Calories per Activity")
+        avg_cal = df.groupby("Activity")["Calories"].mean().sort_values()
+        fig2, ax2 = plt.subplots(figsize=(5, 3))
+        avg_cal.plot(kind="bar", color="teal", ax=ax2)
+        plt.ylabel("Avg Calories")
+        st.pyplot(fig2)
 
-    # Visualization 4: Calories contribution pie chart
-    st.subheader("Calories Contribution by Activity")
-    calories_sum = df.groupby("Activity")["Calories"].sum()
-    fig4, ax4 = plt.subplots(figsize=(6, 6))
-    ax4.pie(calories_sum, labels=calories_sum.index, autopct="%1.1f%%", startangle=90,
-            colors=sns.color_palette("Set2"))
-    ax4.axis("equal")
-    st.pyplot(fig4)
+    # Row 2: Correlation heatmap + Pie chart
+    row2_col1, row2_col2 = st.columns(2)
 
-    # Show actual vs predicted plot
+    with row2_col1:
+        st.subheader("Correlation Heatmap")
+        fig3, ax3 = plt.subplots(figsize=(5, 4))
+        sns.heatmap(df.corr(numeric_only=True), annot=True, cmap="coolwarm", ax=ax3)
+        st.pyplot(fig3)
+
+    with row2_col2:
+        st.subheader("Calories Contribution by Activity")
+        calories_sum = df.groupby("Activity")["Calories"].sum()
+        fig4, ax4 = plt.subplots(figsize=(5, 4))
+        ax4.pie(calories_sum, labels=calories_sum.index, autopct="%1.1f%%",
+                startangle=90, colors=sns.color_palette("Set2"))
+        ax4.axis("equal")
+        st.pyplot(fig4)
+
+    # Row 3: Actual vs Predicted plot
     st.subheader("Actual vs Predicted Calories")
-    st.image("actual_vs_predicted.png", caption="Model Predictions")
+    st.image("actual_vs_predicted.png", caption="Model Predictions", use_column_width=True)
 
-# -------------------------
-# PREDICTION TAB
-# -------------------------
-with tab2:
+# =======================================================
+# 🤖 PREDICTION
+# =======================================================
+elif page == "🤖 Prediction":
     st.title("🤖 Calories Burn Prediction")
 
     # Sidebar input
