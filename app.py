@@ -91,11 +91,40 @@ elif page == "🤖 Prediction":
     weight = st.sidebar.slider("Weight (kg)", 30, 150, 70)
 
     if st.sidebar.button("Predict"):
+        # Encode + Scale input
         cat_encoded = encoder.transform([[activity]])
         num_scaled = scaler.transform([[duration, speed, weight]])
         input_final = np.hstack([num_scaled, cat_encoded])
+
+        # Prediction
         prediction = model.predict(input_final)[0]
+
+        # ✅ Display result
         st.success(f"🔥 Estimated Calories Burned: **{prediction:.2f} kcal**")
+
+        # Relatable insight
+        avg_activity_cal = df[df["Activity"] == activity]["Calories"].mean()
+        st.info(f"💡 On average, people doing **{activity}** burn around **{avg_activity_cal:.2f} kcal**. "
+                f"Your predicted calories are **{prediction:.2f} kcal**.")
+
+        # ✅ Actual vs Predicted Graph
+        st.subheader("📊 Actual vs Predicted (Sample Comparison)")
+        sample_df = df[df["Activity"] == activity].sample(20, random_state=42)
+        X_cat = encoder.transform(sample_df[["Activity"]])
+        X_num = scaler.transform(sample_df[["Duration_min", "Speed_kmph", "Weight_kg"]])
+        X_final = np.hstack([X_num, X_cat])
+        y_true = sample_df["Calories"].values
+        y_pred = model.predict(X_final)
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.scatter(y_true, y_pred, color="teal", alpha=0.7, label="Samples")
+        ax.scatter([prediction], [prediction], color="red", s=100, marker="x", label="Your Prediction")
+        ax.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "k--", lw=2, label="Perfect Fit")
+        ax.set_xlabel("Actual Calories")
+        ax.set_ylabel("Predicted Calories")
+        ax.set_title("Actual vs Predicted Calories")
+        ax.legend()
+        st.pyplot(fig)
 
     # Batch prediction
     st.header("📂 Upload CSV for Batch Predictions")
@@ -112,3 +141,5 @@ elif page == "🤖 Prediction":
 
         csv = data.to_csv(index=False).encode("utf-8")
         st.download_button("Download Predictions", csv, "predictions.csv", "text/csv")
+
+
